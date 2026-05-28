@@ -1,5 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -35,23 +38,17 @@ export async function GET(request: Request) {
     return NextResponse.redirect(redirect);
   }
 
-  const response = NextResponse.redirect(new URL(next, url.origin));
+  const cookieStore = await cookies();
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
-        return request.headers
-          .getSetCookie?.()
-          ?.map((c) => {
-            const [nameValue] = c.split(";");
-            const [name, ...rest] = nameValue.split("=");
-            return { name, value: rest.join("=") };
-          }) ?? [];
+        return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          cookieStore.set(name, value, options)
+        );
       },
     },
   });
@@ -67,6 +64,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(redirect);
   }
 
-  return response;
+  return NextResponse.redirect(new URL(next, url.origin));
 }
 
