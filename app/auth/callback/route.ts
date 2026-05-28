@@ -4,6 +4,15 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+function isValidHttpUrl(value: string) {
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
 
@@ -35,6 +44,16 @@ export async function GET(request: Request) {
     const redirect = new URL("/login", url.origin);
     redirect.searchParams.set("error", "auth");
     redirect.searchParams.set("message", "서버 환경 변수가 설정되지 않았습니다.");
+    return NextResponse.redirect(redirect);
+  }
+
+  if (!isValidHttpUrl(supabaseUrl)) {
+    const redirect = new URL("/login", url.origin);
+    redirect.searchParams.set("error", "auth");
+    redirect.searchParams.set(
+      "message",
+      "NEXT_PUBLIC_SUPABASE_URL이 올바르지 않습니다."
+    );
     return NextResponse.redirect(redirect);
   }
 

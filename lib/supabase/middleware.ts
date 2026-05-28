@@ -1,6 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function isValidHttpUrl(value: string) {
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -10,6 +19,11 @@ export async function updateSession(request: NextRequest) {
   // If env vars are missing (common in misconfigured deployments),
   // do not hard-fail middleware for all routes.
   if (!supabaseUrl || !supabaseAnonKey) {
+    return supabaseResponse;
+  }
+
+  if (!isValidHttpUrl(supabaseUrl)) {
+    console.error("Invalid NEXT_PUBLIC_SUPABASE_URL", supabaseUrl);
     return supabaseResponse;
   }
 
