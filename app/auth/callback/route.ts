@@ -39,6 +39,7 @@ export async function GET(request: Request) {
   }
 
   const cookieStore = await cookies();
+  const response = NextResponse.redirect(new URL(next, url.origin));
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -46,9 +47,9 @@ export async function GET(request: Request) {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          cookieStore.set(name, value, options)
-        );
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
       },
     },
   });
@@ -64,6 +65,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(redirect);
   }
 
-  return NextResponse.redirect(new URL(next, url.origin));
+  return response;
 }
 
